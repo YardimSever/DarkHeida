@@ -51,6 +51,14 @@ DarkHeida, dizüstü bilgisayarınızın **gücünü tek panelden** yönetmenizi
 - **Pil yüzdesi** ve **durum**
 - **Otomatik tasarruf** — %20 altına inince
 
+### 🆘 Tepsi Desteği
+- **Sistem tepsisinde ikon** (G Helper gibi)
+- **Hızlı mod** değiştirme (tepsiden)
+- **Başlangıçta çalıştır** toggle
+- **Destek menüsü** (Destek sayfası + Hata bildir)
+- **Yeniden başlat** (tepsiden)
+- **Çıkış** (tepsiden)
+
 ### 🌐 Diğer
 - **Başlangıçta çalıştır**
 - **Config kalıcılığı**

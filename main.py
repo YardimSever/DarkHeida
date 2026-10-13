@@ -1,3 +1,5 @@
+import pythonnet
+import clr
 import webview
 import psutil
 import subprocess
@@ -11,6 +13,8 @@ import re
 import sys
 import threading
 import time
+import pystray
+from PIL import Image
 from datetime import datetime
 from ctypes import wintypes
 
@@ -122,7 +126,16 @@ class Api:
     @staticmethod
     def _run(cmd):
         try:
-            r = subprocess.run(cmd, shell=False, capture_output=True, timeout=10)
+            creationflags = 0
+            if sys.platform == "win32":
+                creationflags = subprocess.CREATE_NO_WINDOW
+            r = subprocess.run(
+                cmd,
+                shell=False,
+                capture_output=True,
+                timeout=10,
+                creationflags=creationflags
+            )
             return r.returncode == 0
         except Exception:
             return False
@@ -321,7 +334,7 @@ class Api:
             return False
 
     def open_github(self):
-        webbrowser.open("https://github.com/");
+        webbrowser.open("https://github.com/YardimSever/DarkHeida/issues/new");
         return True
 
     def get_system_info(self):
@@ -1369,10 +1382,117 @@ if(window.pywebview && pywebview.api) init();
      #Film izleniyor → Otomatik Sessiz moda geçer
      #Gece 23:00 oldu → Otomatik Gece moduna geçer
 
+def create_tray_icon(api):
+    """Sistem tepsisinde ikon oluşturur"""
+    icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "darkheida.ico")
+
+    try:
+        image = Image.open(icon_path)
+    except Exception:
+        image = Image.new('RGB', (64, 64), color='#FF0033')
+
+    def show_window(icon, item):
+        """Pencereyi göster"""
+        try:
+            webview.windows[0].show()
+            webview.windows[0].restore()
+        except Exception:
+            pass
+
+    def set_mode(mode):
+        """Mod değiştirme handler'ı"""
+
+        def handler(icon, item):
+            api.change_power_mode(mode)
+
+        return handler
+
+    def is_mode(mode):
+        """Mod kontrolü (radio buton için)"""
+
+        def check(item):
+            return api.config.get("power_mode") == mode
+
+        return check
+
+    def toggle_startup(icon, item):
+        """Başlangıçta çalıştır toggle"""
+        current = api.get_startup_status()
+        api.toggle_startup(not current)
+
+    def is_startup(item):
+        """Başlangıçta çalıştır kontrolü"""
+        return api.get_startup_status()
+
+    def restart_app(icon, item):
+        """Programı yeniden başlat"""
+        try:
+            icon.stop()
+            api.stop()
+            webview.windows[0].destroy()
+            os.execl(sys.executable, sys.executable, *sys.argv)
+        except Exception:
+            pass
+
+    def open_support_page(icon, item):
+        """Program içindeki Destek sayfasına git"""
+        try:
+            webview.windows[0].show()
+            webview.windows[0].restore()
+            webview.windows[0].evaluate_js("showPage('support', document.getElementById('menu-support'))")
+        except Exception:
+            pass
+
+    def open_github_issue(icon, item):
+        """GitHub issue sayfasını aç"""
+        webbrowser.open("https://github.com/YardimSever/DarkHeida/issues/new")
+
+    def quit_app(icon, item):
+        """Programdan çık"""
+        try:
+            icon.stop()
+        except Exception:
+            pass
+        try:
+            api.stop()
+        except Exception:
+            pass
+        try:
+            webview.windows[0].destroy()
+        except Exception:
+            pass
+
+    menu = pystray.Menu(
+        pystray.MenuItem('🖥️ Pencereyi Göster', show_window, default=True),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem('⚡ Hızlı Mod', pystray.Menu(
+            pystray.MenuItem('Windows', set_mode('windows'), checked=is_mode('windows'), radio=True),
+            pystray.MenuItem('Sessiz', set_mode('silent'), checked=is_mode('silent'), radio=True),
+            pystray.MenuItem('Performans', set_mode('performance'), checked=is_mode('performance'), radio=True),
+            pystray.MenuItem('Turbo', set_mode('turbo'), checked=is_mode('turbo'), radio=True),
+        )),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem('🔄 Başlangıçta Çalıştır', toggle_startup, checked=is_startup),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem('🔄 Yeniden Başlat', restart_app),
+        pystray.MenuItem('🆘 Destek', pystray.Menu(
+            pystray.MenuItem('📄 Destek Sayfası', open_support_page),
+            pystray.MenuItem('🐛 Hata Bildir', open_github_issue),
+        )),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem('❌ Çıkış', quit_app),
+    )
+
+    icon = pystray.Icon("DarkHeida", image, "DarkHeida", menu)
+    icon.run()
+
 
 def main():
     api = Api()
     icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "darkheida.ico")
+
+    # Tepside ikon oluştur (ayrı thread'de)
+    threading.Thread(target=create_tray_icon, args=(api,), daemon=True).start()
 
     webview.create_window(
         "DarkHeida",
