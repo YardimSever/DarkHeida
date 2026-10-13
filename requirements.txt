@@ -1,0 +1,5 @@
+pywebview>=4.0
+psutil>=5.9
+WMI>=1.5
+pywin32>=300
+Pillow>=10.0

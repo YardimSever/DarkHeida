@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Sanal Ortam
+.venv/
+venv/
+env/
+ENV/
+
+# PyCharm / IDE
+.idea/
+.vscode/
+*.swp
+
+# Kullanıcı Ayarları (kişisel)
+config.json
+
+# Test Dosyaları
+battery_test.py
+battery-report.html
+web_test.py
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# EXE Build
+*.spec
